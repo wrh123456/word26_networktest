@@ -27,6 +27,8 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     private Button button;
     private TextView textView;
+    private String[] data=new String[10];
+    int i=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,17 +139,13 @@ public class MainActivity extends AppCompatActivity {
                     case XmlPullParser.END_TAG:
                         if("newsInfo".equals(nodename)){
                             final String bb="newsInfo内容："+"icon:"+icon+",title:"+title+",content:"+content+",type:"+type+",comment:"+comment;
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    textView.setText(bb);
-                                }
-                            });
-
+                            data[i]=bb;
+                            i++;
                         }
                         break;
                         default:break;
                 }
+                evenType = xmlPullParser.next();
 //            String id="";
 //            String name="";
 //            String version="";
@@ -172,7 +170,16 @@ public class MainActivity extends AppCompatActivity {
 //                        break;
 //                        default:break;
 //                }
-                evenType = xmlPullParser.next();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String finaldata=null;
+                        for(int k=0;k<i;k++){
+                            finaldata=finaldata+data[k]+"\n";
+                        }
+                        textView.setText(finaldata);
+                    }
+                });
             }
         } catch (XmlPullParserException e) {
             e.printStackTrace();
