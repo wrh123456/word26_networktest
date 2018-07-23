@@ -15,6 +15,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class MainActivity extends AppCompatActivity {
     private Button button;
     private TextView textView;
@@ -27,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                action();
+//                action();
+                okhttpsendRequest();
             }
         });
         textView=findViewById(R.id.text);
@@ -75,10 +80,31 @@ public class MainActivity extends AppCompatActivity {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
-
                 }
+            }
+        }).start();
+    }
+    private void okhttpsendRequest(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
 
+                try {
+                    OkHttpClient okHttpClient=new OkHttpClient();
+                    Request request=new Request.Builder()
+                            .url("https://www.baidu.com")
+                            .build();
+                    Response respons=okHttpClient.newCall(request).execute();
+                    final String responBuider=respons.body().string();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setText(responBuider);
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }
