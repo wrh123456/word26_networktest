@@ -7,6 +7,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -19,6 +22,9 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                action();
+//                action();//直接输出获得的数据
                 okhttpsendRequest();
             }
         });
@@ -102,14 +108,33 @@ public class MainActivity extends AppCompatActivity {
                             .build();
                     Response respons=okHttpClient.newCall(request).execute();
                     final String responBuider=respons.body().string();
-                    parseXMLWithPull(responBuider);
+//                    parseXMLWithPull(responBuider);//使用Pull解析
+                    parseXMLWithSAX(responBuider);//使用SAX解析
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
     }
-    private void parseXMLWithPull(String xmldata){
+    private void parseXMLWithSAX(String xmldata){//使用SAX解析
+        try {
+            SAXParserFactory factory=SAXParserFactory.newInstance();
+            XMLReader xmlReader=factory.newSAXParser().getXMLReader();
+            ContentHandler handler=new ContentHandler();
+            //将ContentHandler的实例放进XMLReader中
+            xmlReader.setContentHandler(handler);
+            //开始解析
+            xmlReader.parse(new InputSource(new StringReader(xmldata)));
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    private void parseXMLWithPull(String xmldata){//使用Pull解析
         try {
             XmlPullParserFactory factory=XmlPullParserFactory.newInstance();
             XmlPullParser xmlPullParser=factory.newPullParser();
@@ -146,36 +171,18 @@ public class MainActivity extends AppCompatActivity {
                         default:break;
                 }
                 evenType = xmlPullParser.next();
-//            String id="";
-//            String name="";
-//            String version="";
-//            while (evenType!=XmlPullParser.END_DOCUMENT){
-//                String nodeName=xmlPullParser.getName();
-//                switch (evenType){
-//                    case XmlPullParser.START_TAG:
-//                        if("id".equals(nodeName)){
-//                            id=xmlPullParser.nextText();
-//                        }else if("name".equals(nodeName)){
-//                            name=xmlPullParser.nextText();
-//                        }
-//                        else if("version".equals(nodeName)){
-//                            version=xmlPullParser.nextText();
-//                        }
-//                        break;
-//                    case XmlPullParser.END_TAG:
-//                        if("app".equals(nodeName)){
-//                            String a="id:"+id+",name:"+name+",version:"+version;
-//                            textView.setText(a);
-//                        }
-//                        break;
-//                        default:break;
-//                }
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         String finaldata=null;
                         for(int k=0;k<i;k++){
-                            finaldata=finaldata+data[k]+"\n";
+                            if(finaldata!=null){
+                                finaldata=finaldata+"\n"+data[k]+"\n";
+                            }else{
+                                finaldata=data[k]+"\n";
+                            }
+
                         }
                         textView.setText(finaldata);
                     }
