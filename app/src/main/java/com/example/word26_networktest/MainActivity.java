@@ -7,10 +7,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -88,24 +93,92 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
                     OkHttpClient okHttpClient=new OkHttpClient();
                     Request request=new Request.Builder()
-                            .url("https://www.baidu.com")
+                            .url("http://192.168.3.102:9090/newsinfo.xml")
                             .build();
                     Response respons=okHttpClient.newCall(request).execute();
                     final String responBuider=respons.body().string();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            textView.setText(responBuider);
-                        }
-                    });
+                    parseXMLWithPull(responBuider);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
+    }
+    private void parseXMLWithPull(String xmldata){
+        try {
+            XmlPullParserFactory factory=XmlPullParserFactory.newInstance();
+            XmlPullParser xmlPullParser=factory.newPullParser();
+            xmlPullParser.setInput(new StringReader(xmldata));
+            int evenType=xmlPullParser.getEventType();
+            String icon="";
+            String title="";
+            String content="";
+            int type=-1;
+            int comment=-1;
+            while(evenType!=XmlPullParser.END_DOCUMENT) {
+                String nodename=xmlPullParser.getName();
+                switch (evenType){
+                    case XmlPullParser.START_TAG:
+                        if("icon".equals(nodename)){
+                            icon=xmlPullParser.nextText();
+                        }else if("title".equals(nodename)){
+                            title=xmlPullParser.nextText();
+                        }else if("content".equals(nodename)){
+                            content=xmlPullParser.nextText();
+                        }else if("type".equals(nodename)){
+                            type=Integer.parseInt(xmlPullParser.nextText());
+                        }else if("comment".equals(nodename)){
+                            comment=Integer.parseInt(xmlPullParser.nextText());
+                        }
+                        break;
+                    case XmlPullParser.END_TAG:
+                        if("newsInfo".equals(nodename)){
+                            final String bb="newsInfo内容："+"icon:"+icon+",title:"+title+",content:"+content+",type:"+type+",comment:"+comment;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    textView.setText(bb);
+                                }
+                            });
+
+                        }
+                        break;
+                        default:break;
+                }
+//            String id="";
+//            String name="";
+//            String version="";
+//            while (evenType!=XmlPullParser.END_DOCUMENT){
+//                String nodeName=xmlPullParser.getName();
+//                switch (evenType){
+//                    case XmlPullParser.START_TAG:
+//                        if("id".equals(nodeName)){
+//                            id=xmlPullParser.nextText();
+//                        }else if("name".equals(nodeName)){
+//                            name=xmlPullParser.nextText();
+//                        }
+//                        else if("version".equals(nodeName)){
+//                            version=xmlPullParser.nextText();
+//                        }
+//                        break;
+//                    case XmlPullParser.END_TAG:
+//                        if("app".equals(nodeName)){
+//                            String a="id:"+id+",name:"+name+",version:"+version;
+//                            textView.setText(a);
+//                        }
+//                        break;
+//                        default:break;
+//                }
+                evenType = xmlPullParser.next();
+            }
+        } catch (XmlPullParserException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
